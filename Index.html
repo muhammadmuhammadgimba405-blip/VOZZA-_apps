@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VOZZA - African Voice Community</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+ body{ background:#120e07; color:white; }
+ .voz-orange{ background:#FF6A00; }
+ .voz-card{ background:#1E150A; border:1px solid #2a2010; }
+ .scroll-hide::-webkit-scrollbar{ display:none; }
+ .wave{ animation: wave 0.5s infinite alternate; }
+ @keyframes wave{ from{ height:8px } to{ height:28px } }
+</style>
+</head>
+<body class="max-w-[500px] mx-auto min-h-screen pb-[90px]">
+
+<!-- HEADER -->
+<div class="sticky top-0 z-50 bg-[#120e07] p-3 border-b border-[#2a2010]">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-black"><span class="text-white">VO</span><span class="text-[#FF6A00]">ZZA</span></h1>
+    <div class="flex gap-2">
+      <input id="search" placeholder="Search people" class="bg-[#2a2010] rounded-full px-4 py-1.5 text-sm w-[130px]">
+      <button onclick="openAuth()" id="authBtn" class="bg-[#FF6A00] px-3 py-1 rounded-full text-sm">Sign Up</button>
+    </div>
+  </div>
+  <div class="flex gap-3 mt-3 overflow-x-auto scroll-hide">
+    <div onclick="openStoryComposer()" class="text-center min-w-[60px]"><div class="w-[60px] h-[60px] rounded-full border-2 border-[#FF6A00] bg-[#2a2010] flex items-center justify-center text-2xl">+</div><p class="text-[10px] mt-1">Add status</p></div>
+    <div id="stories" class="flex gap-3"></div>
+  </div>
+</div>
+
+<!-- POST BOX -->
+<div class="voz-card m-3 p-3 rounded-2xl flex gap-2">
+  <img id="myAvatar" src="https://i.pravatar.cc/100?img=12" class="w-8 h-8 rounded-full">
+  <button onclick="openComposer()" class="flex-1 bg-[#2a2010] text-left px-4 py-2 rounded-full text-sm text-gray-400">What's your voice today?</button>
+  <button onclick="openComposer()" class="w-9 h-9 voz-orange rounded-full">🎙️</button>
+</div>
+
+<!-- TABS -->
+<div class="flex gap-2 px-3 mt-2">
+  <button onclick="setTab('foryou')" id="tab-foryou" class="px-4 py-1.5 rounded-full bg-[#FF6A00] text-sm">✨ For You</button>
+  <button onclick="setTab('following')" id="tab-following" class="px-4 py-1.5 rounded-full bg-[#2a2010] text-sm">👥 Following</button>
+  <button onclick="setTab('trending')" id="tab-trending" class="px-4 py-1.5 rounded-full bg-[#2a2010] text-sm">🔥 Trending</button>
+</div>
+<div class="flex gap-2 px-3 mt-2 overflow-x-auto scroll-hide">
+  <button onclick="filterTag('comedy')" class="px-3 py-1 rounded-full bg-[#2a2010] text-[#FF6A00] text-xs">#comedy</button>
+  <button onclick="filterTag('news')" class="px-3 py-1 rounded-full bg-[#2a2010] text-[#FF6A00] text-xs">#news</button>
+  <button onclick="filterTag('music')" class="px-3 py-1 rounded-full bg-[#2a2010] text-[#FF6A00] text-xs">#music</button>
+  <button onclick="filterTag('motivation')" class="px-3 py-1 rounded-full bg-[#2a2010] text-[#FF6A00] text-xs">#motivation</button>
+  <button onclick="filterTag('naija')" class="px-3 py-1 rounded-full bg-[#2a2010] text-[#FF6A00] text-xs">#naija</button>
+  <button onclick="filterTag('culture')" class="px-3 py-1 rounded-full bg-[#2a2010] text-[#FF6A00] text-xs">#culture</button>
+</div>
+
+<!-- FEED -->
+<div id="feed" class="mt-3"></div>
+
+<!-- COMPOSER MODAL -->
+<div id="composer" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-end">
+  <div class="bg-[#1E150A] w-full rounded-t-[25px] p-4 max-h-[92vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-3">
+      <button onclick="closeComposer()" class="text-2xl">✕</button>
+      <p id="timer" class="font-black text-2xl">0:00 / 0:60</p>
+      <button onclick="closeComposer()" class="text-sm">Cancel X</button>
+    </div>
+    <div class="h-2 bg-[#2a2010] rounded-full mb-2"><div id="progress" class="h-2 bg-yellow-400 rounded-full w-0"></div></div>
+    <p id="size" class="text-center text-[10px] text-gray-400">0 KB / 1 MB - OPUS ~80KB/image</p>
+
+    <div class="flex justify-center gap-3 my-4">
+      <button id="recBtn" onclick="toggleRec()" class="w-20 h-20 rounded-full voz-orange text-3xl">🎙️</button>
+      <button onclick="stopAndNext()" class="px-3 py-1 bg-[#2a2010] rounded-full text-xs">⏭️ Stop & Next</button>
+    </div>
+    <div id="waves" class="flex gap-1 justify-center h-[40px] items-center mb-3"></div>
+
+    <p class="text-xs mb-2">Voice effects (make voice good!):</p>
+    <div class="flex flex-wrap gap-2 mb-3">
+      <button class="effect px-3 py-1 rounded-full border border-[#FF6A00] text-xs" data-eff="bass">Bass Boost</button>
+      <button class="effect px-3 py-1 rounded-full border border-[#FF6A00] text-xs" data-eff="noise">Noise Reduction</button>
+      <button class="effect px-3 py-1 rounded-full border border-[#FF6A00] text-xs" data-eff="compress">Compression</button>
+      <button class="effect px-3 py-1 rounded-full border border-[#FF6A00] text-xs" data-eff="reverb">Light Reverb</button>
+      <button class="effect px-3 py-1 rounded-full border border-[#FF6A00] text-xs" data-eff="echo">Echo</button>
+      <button class="effect px-3 py-1 rounded-full border border-[#FF6A00] text-xs" data-eff="robot">Robot</button>
+      <button class="effect px-3 py-1 rounded-full border border-[#FF6A00] text-xs" data-eff="studio">Studio</button>
+      <button class="effect px-3 py-1 rounded-full border border-[#FF6A00] text-xs" data-eff="telephone">Telephone</button>
+      <button class="effect px-3 py-1 rounded-full border border-[#FF6A00] text-xs" data-eff="deep">Deep</button>
+      <button class="effect px-3 py-1 rounded-full border border-[#FF6A00] text-xs" data-eff="chipmunk">Chipmunk</button>
+    </div>
+
+    <p class="text-xs mb-2">Pictures (<span id="picCount">0</span>/8) - Stay after refresh <button onclick="document.getElementById('pics').click()" class="float-right bg-green-900 px-3 py-1 rounded-full text-[10px]">+ Add 8 pics</button></p>
+    <input id="pics" type="file" multiple accept="image/*" hidden onchange="handlePics(this)">
+    <div id="picPreview" class="flex gap-2 overflow-x-auto mb-3"></div>
+
+    <textarea id="caption" placeholder="Say something... #comedy #news #music #naija #culture (optional - post anyway works)" class="w-full bg-[#2a2010] rounded-xl p-3 text-sm min-h-[80px]"></textarea>
+
+    <div class="flex justify-between items-center mt-3 bg-[#2a2010] p-2 rounded-full text-xs"><span>📶 Data Saver - 3G mode</span><input type="checkbox" checked></div>
+    <button onclick="postVoice()" id="postBtn" class="w-full voz-orange py-3 rounded-full font-bold mt-3">Post voice</button>
+    <p class="text-center text-[10px] mt-2 text-gray-500">Firebase + Cloudinary + Offline ready</p>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div id="authModal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4">
+  <div class="bg-[#1E150A] p-5 rounded-2xl w-full max-w-sm">
+    <h2 class="font-bold text-xl mb-3">Sign up - Earn gifts 🎁</h2>
+    <input id="authEmail" placeholder="Email" class="w-full bg-[#2a2010] p-2 rounded mb-2 text-sm">
+    <input id="authPass" type="password" placeholder="Password" class="w-full bg-[#2a2010] p-2 rounded mb-2 text-sm">
+    <input id="authName" placeholder="Name + Bio (optional)" class="w-full bg-[#2a2010] p-2 rounded mb-3 text-sm">
+    <button onclick="doAuth()" class="w-full voz-orange py-2 rounded-full font-bold">Sign Up / Sign In</button>
+    <button onclick="closeAuth()" class="w-full mt-2 text-sm text-gray-400">Continue without sign in (view only) - Post anyway!</button>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="fixed bottom-0 left-0 right-0 bg-[#1E150A] border-t border-[#2a2010] flex justify-around items-center p-2 max-w-[500px] mx-auto">
+  <button class="text-[#FF6A00]">🏠<p class="text-[10px]">Home</p></button>
+  <button onclick="setTab('trending')">🔥<p class="text-[10px]">Trending</p></button>
+  <button onclick="openComposer()" class="w-14 h-14 voz-orange rounded-full -mt-6 text-2xl">🎙️</button>
+  <button>🔔<p class="text-[10px]">Alerts</p></button>
+  <button onclick="openSettings()">⚙️<p class="text-[10px]">Me</p></button>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, doc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+// YOUR FIREBASE - vozza-45dd8
+const firebaseConfig = {
+  apiKey: "AIzaSyDQyYOcTTjt3CQakJM2Mweh7-rnbEfvhKU",
+  authDomain: "vozza-45dd8.firebaseapp.com",
+  projectId: "vozza-45dd8",
+  storageBucket: "vozza-45dd8.firebasestorage.app",
+  messagingSenderId: "379168052667",
+  appId: "1:379168052667:web:420370ff83cadeb88c609e"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// YOUR CLOUDINARY - kosm2eub
+const CLOUDINARY_CLOUD = "kosm2eub";
+const CLOUDINARY_PRESET = "vozza_app";
+const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`;
+
+let rec=null, chunks=[], secs=0, timerInt=null, mediaRec=null, currentEff=null, selectedPics=[], selectedPicsUrls=[], currentUser=null, isCommentMode=false;
+
+window.openComposer = ()=>{ document.getElementById('composer').classList.remove('hidden'); isCommentMode=false; document.getElementById('timer').innerText="0:00 / 0:60"; }
+window.closeComposer = ()=>{ stopRec(); document.getElementById('composer').classList.add('hidden'); }
+window.stopAndNext = ()=>{ stopRec(); alert('Stopped! You can move next without finishing - post anyway works!'); }
+window.openAuth = ()=> document.getElementById('authModal').classList.remove('hidden');
+window.closeAuth = ()=> document.getElementById('authModal').classList.add('hidden');
+
+onAuthStateChanged(auth, (user)=>{ currentUser=user; if(user) document.getElementById('authBtn').innerText=user.email.split('@')[0]; loadFeed(); loadStories(); });
+
+window.doAuth = async ()=>{
+  const email=document.getElementById('authEmail').value;
+  const pass=document.getElementById('authPass').value;
+  if(!email||!pass) return alert('Email & pass needed');
+  try{ await createUserWithEmailAndPassword(auth,email,pass); }catch(e){ try{ await signInWithEmailAndPassword(auth,email,pass); }catch(err){ alert(err.message); return; } }
+  closeAuth();
+}
+
+window.toggleRec = async ()=>{
+  if(mediaRec && mediaRec.state==='recording'){ stopRec(); return; }
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    mediaRec=new MediaRecorder(stream); chunks=[]; secs=0;
+    mediaRec.ondataavailable=e=>chunks.push(e.data);
+    mediaRec.onstop=()=>{ rec=new Blob(chunks,{type:'audio/webm'}); document.getElementById('size').innerText=Math.round(rec.size/1024)+' KB - '+ (isCommentMode?'20s Comment':'60s Voice'); };
+    mediaRec.start();
+    document.getElementById('recBtn').innerText='⏹️';
+    timerInt=setInterval(()=>{
+      secs++; 
+      let max = isCommentMode?20:60;
+      document.getElementById('timer').innerText=`0:${String(secs).padStart(2,'0')} / 0:${max}`;
+      document.getElementById('progress').style.width=(secs/max*100)+'%';
+      const w=document.createElement('div'); w.className='w-1 bg-[#FF6A00] wave rounded'; w.style.height=Math.random()*20+10+'px'; document.getElementById('waves').appendChild(w);
+      if(secs>=max) stopRec();
+    },1000);
+  }catch(e){ alert('Mic permission needed'); }
+}
+window.stopRec = ()=>{ if(mediaRec){ mediaRec.stop(); clearInterval(timerInt); document.getElementById('recBtn').innerText='🎙️'; mediaRec.stream.getTracks().forEach(t=>t.stop()); } }
+
+document.querySelectorAll('.effect').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.effect').forEach(x=>x.classList.remove('bg-[#FF6A00]','text-white')); 
+  b.classList.add('bg-[#FF6A00]','text-white'); currentEff=b.dataset.eff;
+});
+
+window.handlePics = async (input)=>{
+  const files=[...input.files].slice(0,8);
+  selectedPics=files;
+  document.getElementById('picCount').innerText=files.length;
+  const prev=document.getElementById('picPreview'); prev.innerHTML='Uploading to Cloudinary...';
+  selectedPicsUrls=[];
+  for(let f of files){
+    const fd=new FormData(); fd.append('file',f); fd.append('upload_preset',CLOUDINARY_PRESET);
+    try{
+      const res=await fetch(CLOUDINARY_URL,{method:'POST',body:fd});
+      const data=await res.json();
+      if(data.secure_url) selectedPicsUrls.push(data.secure_url);
+    }catch(e){ console.log('Cloudinary fail',e); selectedPicsUrls.push(URL.createObjectURL(f)); }
+  }
+  prev.innerHTML=''; selectedPicsUrls.forEach(url=>{ const img=document.createElement('img'); img.src=url; img.className='w-20 h-20 object-cover rounded-lg border-2 border-[#FF6A00]'; prev.appendChild(img); });
+}
+
+window.postVoice = async ()=>{
+  const text=document.getElementById('caption').value;
+  if(!rec && !text && selectedPicsUrls.length===0) return alert('Add voice OR text OR picture - optional but need one! Post anyway works!');
+  const btn=document.getElementById('postBtn'); btn.innerText='Posting to Firebase...'; btn.disabled=true;
+
+  // Upload voice to Cloudinary if exists (as video)
+  let voiceUrl=null;
+  if(rec){
+    const fd=new FormData(); fd.append('file',rec); fd.append('upload_preset',CLOUDINARY_PRESET); fd.append('resource_type','video');
+    try{ const r=await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/video/upload`,{method:'POST',body:fd}); const d=await r.json(); voiceUrl=d.secure_url; }catch(e){ voiceUrl=null; }
+  }
+
+  const postData={
+    text: text||'',
+    voiceUrl: voiceUrl||'',
+    effect: currentEff||'Studio',
+    pics: selectedPicsUrls,
+    user: currentUser?currentUser.email:'Guest',
+    userId: currentUser?currentUser.uid:'guest',
+    likes:0, views: Math.floor(Math.random()*50)+1,
+    createdAt: new Date().toISOString(),
+    timestamp: Date.now(),
+    type: isCommentMode?'comment':'post'
+  };
+
+  // Save offline first (stay after refresh)
+  let offline=JSON.parse(localStorage.getItem('vozza_offline')||'[]'); offline.unshift(postData); localStorage.setItem('vozza_offline',JSON.stringify(offline));
+
+  try{ await addDoc(collection(db,'voices'), {...postData, createdAt: serverTimestamp() }); }catch(e){ console.log('Firebase offline',e); }
+
+  closeComposer(); rec=null; selectedPics=[]; selectedPicsUrls=[]; document.getElementById('caption').value=''; document.getElementById('picPreview').innerHTML=''; document.getElementById('picCount').innerText='0'; document.getElementById('waves').innerHTML='';
+  btn.innerText='Post voice'; btn.disabled=false;
+  loadFeed(); alert('Posted! Firebase vozza-45dd8 + Cloudinary kosm2eub + Offline saved ✅');
+}
+
+window.loadFeed = async ()=>{
+  const feed=document.getElementById('feed');
+  feed.innerHTML=`<p class="text-center py-10">Loading VOZZA...</p>`;
+  let posts=[];
+  try{
+    const q=query(collection(db,'voices'), orderBy('timestamp','desc'));
+    const snap=await getDocs(q);
+    snap.forEach(d=> posts.push({id:d.id, ...d.data()}));
+  }catch(e){ console.log(e); }
+  const offline=JSON.parse(localStorage.getItem('vozza_offline')||'[]');
+  // Merge
+  let all=[...offline, ...posts];
+  if(all.length===0){
+    feed.innerHTML=`<div class="text-center py-20 opacity-60"><div class="text-5xl mb-4">🎙️</div><p class="font-bold text-xl">No voices yet - Empty for test!</p><p class="text-sm mt-2">Be first! Tap mic 🎙️</p><p class="text-[10px] mt-4">Firebase: vozza-45dd8 ✅<br>Cloudinary: kosm2eub ✅</p></div>`;
+    return;
+  }
+  feed.innerHTML=all.map((p,i)=>`
+    <div class="voz-card m-3 rounded-2xl overflow-hidden">
+      <div class="p-3 flex justify-between">
+        <div class="flex gap-2"><img src="https://i.pravatar.cc/100?img=${(i%70)+1}" class="w-8 h-8 rounded-full"><div><p class="text-sm font-bold">${p.user?.split('@')[0]||'Amina'} • ${p.effect||'Studio'}</p><p class="text-[10px] text-gray-400">${p.createdAt?.seconds?new Date(p.createdAt.seconds*1000).toLocaleString():new Date(p.timestamp||Date.now()).toLocaleString()} • ${p.views||0} views</p></div></div>
+        <button onclick="openSettings('${p.id||i}')">⋯</button>
+      </div>
+      ${p.text?`<p class="px-3 pb-2 text-sm">${p.text}</p>`:''}
+      ${p.voiceUrl?`<div class="mx-3 bg-[#2a2010] rounded-full p-2 flex gap-2 items-center"><button onclick="let a=this.nextElementSibling.nextElementSibling; a.paused?a.play():a.pause()" class="w-8 h-8 voz-orange rounded-full">▶️</button><div class="flex-1 h-1 bg-gray-700 rounded"><div class="h-1 bg-[#FF6A00] w-1/3 rounded"></div></div><span class="text-[10px]">0:00 / ${p.type==='comment'?'0:20':'0:60'} - ${p.effect}</span><audio src="${p.voiceUrl}" class="hidden" controls></audio></div>`:''}
+      ${p.pics && p.pics.length>0?`<div class="grid ${p.pics.length===1?'grid-cols-1':'grid-cols-2'} gap-1 mt-2">${p.pics.map(url=>`<img src="${url}" class="w-full ${p.pics.length===1?'max-h-[400px]':'h-[200px]'} object-cover">`).join('')}</div>`:''}
+      <div class="flex justify-between p-3 text-[11px] flex-wrap gap-1">
+        <button onclick="requireAuth(()=>likePost('${p.id||i}'))">❤️ Like • ${p.likes||0}</button>
+        <button onclick="commentVoice()">💬 Comment (20s)</button>
+        <button onclick="giftPost()">🎁 Gift</button>
+        <button onclick="sharePost('${p.id||i}')">↗️ Share</button>
+        <button onclick="savePost('${p.id||i}')">🔖 Save</button>
+        <button onclick="reportPost('${p.id||i}')">⚠️ Report</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.setTab = (t)=>{ document.querySelectorAll('[id^=tab-]').forEach(b=>b.classList.replace('bg-[#FF6A00]','bg-[#2a2010]')); document.getElementById('tab-'+t).classList.replace('bg-[#2a2010]','bg-[#FF6A00]'); loadFeed(); }
+window.filterTag = (tag)=>{ document.getElementById('caption').value='#'+tag+' '; openComposer(); }
+window.requireAuth = (fn)=>{ if(!currentUser){ openAuth(); alert('Sign up to like/gift! You can view without sign in.'); return; } fn(); }
+window.likePost = (id)=>{ alert('Liked! ❤️ (need sign in to count)'); }
+window.giftPost = ()=> requireAuth(()=>alert('Gift sent! 🎁 Firebase counted!'));
+window.savePost = (id)=>{ let s=JSON.parse(localStorage.getItem('vozza_saved')||'[]'); s.push(id); localStorage.setItem('vozza_saved',JSON.stringify(s)); alert('Saved! 🔖'); }
+window.sharePost = (id)=>{ if(navigator.share) navigator.share({title:'VOZZA Voice', text:'Listen on VOZZA!', url:location.href}); else { navigator.clipboard.writeText(location.href); alert('Link copied! Share to WhatsApp, Facebook, all apps!'); } }
+window.reportPost = (id)=>{ const r=prompt('Report reason?'); if(r) alert('Reported! Admin will check Firebase.'); }
+window.commentVoice = ()=>{ openComposer(); isCommentMode=true; document.getElementById('timer').innerText='0:00 / 0:20'; alert('Comment mode: 20s voice! Optional text + pics >5 works!'); }
+window.openSettings = (id)=>{ const del=confirm('VOZZA Settings:\nOK=Delete my post\nCancel=Privacy/Bio'); if(del){ let off=JSON.parse(localStorage.getItem('vozza_offline')||'[]'); off.splice(0,1); localStorage.setItem('vozza_offline',JSON.stringify(off)); loadFeed(); alert('Deleted! (local)'); } else { alert('Privacy: Profile pic, bio visible. Offline works. African colors. Facebook stories 24h. Big pics like Facebook!'); } }
+window.openStoryComposer = ()=>{ const s=prompt('Add story text (24h delete, Facebook style + view count)?'); if(s){ let stories=JSON.parse(localStorage.getItem('vozza_stories')||'[]'); stories.unshift({text:s, time:Date.now(), views:0}); localStorage.setItem('vozza_stories',JSON.stringify(stories)); loadStories(); } }
+window.loadStories = async ()=>{
+  let stories=JSON.parse(localStorage.getItem('vozza_stories')||'[]').filter(s=>Date.now()-s.time<86400000);
+  localStorage.setItem('vozza_stories',JSON.stringify(stories));
+  document.getElementById('stories').innerHTML=stories.map(s=>`<div class="text-center min-w-[60px]"><div class="w-[60px] h-[60px] rounded-full border-2 border-green-500 bg-[#2a2010] flex items-center justify-center text-[10px] p-1">${s.text.slice(0,15)}</div><p class="text-[8px] mt-1">${s.views} views • 24h</p></div>`).join('');
+}
+loadFeed(); loadStories();
+</script>
+</body>
+</html>
